@@ -1,24 +1,25 @@
 ﻿using DoubleLinkedList;
+using Lab1.GameAccounts;
 
 namespace Lab1;
 
 internal sealed class Accounts
 {
-    private static DoubleLinkedList<GameAccount> _accounts;
+    private static readonly DoubleLinkedList<StandardModeAccount> _accounts;
 
     static Accounts()
     {
         _accounts = new();
     }
 
-    public static GameAccount GetByName(string name) => 
+    public static StandardModeAccount GetByName(string name) => 
         _accounts
         .ReadFromHead()
         .First(gameAccount => gameAccount.UserName == name);
 
     public static void Clear() => _accounts.Clear();
-    public static void Remove(GameAccount account) => _accounts.RemoveFirstFromTail(account);
-    public static void Add(GameAccount account)
+    public static void Remove(StandardModeAccount account) => _accounts.RemoveFirstFromTail(account);
+    public static void Add(StandardModeAccount account)
     {
         if(account is null)
         {

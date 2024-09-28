@@ -1,4 +1,7 @@
-﻿namespace Lab1;
+﻿using Lab1.GameAccounts;
+using Lab1.Games;
+
+namespace Lab1;
 
 internal sealed class Program
 {
@@ -15,7 +18,22 @@ internal sealed class Program
         return playerName;
     }
 
-    private static bool TryAddAccount(GameAccount account)
+    private static StandardModeAccount GenerateAccount(string userName)
+    {
+        StandardModeAccount result;
+        var index = Random.Shared.Next(0, 3);
+
+        switch(index)
+        {
+            case 0: result = new ArcadeModeAccount(userName);break;
+            case 1: result = new HardModeAccount(userName, 5); break;
+            default: result = new(userName); break;
+        }    
+
+        return result;
+    }
+
+    private static bool TryAddAccount(StandardModeAccount account)
     {
         bool result = false;
 
@@ -37,8 +55,8 @@ internal sealed class Program
     {
         bool spin = true;
         int action;
-        GameAccount firstPlayer = null;
-        GameAccount secondPlayer = null;
+        StandardModeAccount firstPlayer = null;
+        StandardModeAccount secondPlayer = null;
 
         while (spin)
         {
@@ -60,16 +78,25 @@ internal sealed class Program
                     {
                         var firstPlayerName = SubmitPlayerName(1);
                         var secondPlayerName = SubmitPlayerName(2);
-                        firstPlayer = new(firstPlayerName);
-                        secondPlayer = new(secondPlayerName);
+                        firstPlayer = GenerateAccount(firstPlayerName);
+                        secondPlayer = GenerateAccount(secondPlayerName);
 
-                        if (!TryAddAccount(firstPlayer) || !TryAddAccount(secondPlayer))
+                        if (!TryAddAccount(firstPlayer) 
+                            || !TryAddAccount(secondPlayer))
                         {
                             firstPlayer = null;
                             secondPlayer = null;
                             Console.WriteLine("Database will be cleared");
                             Console.ReadKey();
                             Accounts.Clear();
+                        }
+                        else
+                        {
+                            Console.WriteLine("Accounts generated successfully.");
+                            Console.WriteLine($"First account type: {firstPlayer.DisplayType}");
+                            Console.WriteLine($"Second account type: {secondPlayer.DisplayType}");
+
+                            Console.ReadKey();
                         }
                     }; break;
 
@@ -95,7 +122,7 @@ internal sealed class Program
                                         .Range('a', 'z' - 'a' + 1)
                                         .Select(x =>
                                         {
-                                            var account = new GameAccount(((char)x).ToString());
+                                            var account = GenerateAccount(((char)x).ToString());
                                             Accounts.Add(account);
                                             return account;
                                         })
@@ -116,6 +143,7 @@ internal sealed class Program
                             var name = Console.ReadLine();
                             Console.Clear();
                             var account = Accounts.GetByName(name);
+                            Console.WriteLine($"\nType: {account.DisplayType}\n");
                             Console.Write($"\n{account.UserName}\nGames count: {account.GamesCount}\nRating: {account.CurrentRating}\n\nOppName\tStatus\tRating\tIndex\n\n");
                             foreach (var item in account.GetHistory())
                             {
@@ -136,8 +164,8 @@ internal sealed class Program
 
     private static void OnGameCompleted(Game game)
     {
-        Console.WriteLine($"The game {game.GetShortId()} " +
-            $"between {game.FirstPlayer.UserName} and " +
-            $"{game.SecondPlayer.UserName} on rating {game.Rating} comleted.");
+        Console.WriteLine($"* Game [{game.Index}]\n" +
+            $"between [{game.FirstPlayer.UserName}] and " +
+            $"[{game.SecondPlayer.UserName}]\nwith type [{game.DisplayType}]\non rating [w: {game.GetWinRating()}, l:{game.GetLooseRating()}] comleted.\n");
     }
 }

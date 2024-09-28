@@ -1,27 +1,29 @@
 ﻿using DoubleLinkedList;
+using Lab1.GameAccounts;
+using Lab1.Games;
+using Lab1.Games.GameFactory;
 using System;
+using System.Net.Http.Headers;
 
 namespace Lab1;
 
 internal sealed class Battlefield
 {
-    public static void SimulateBattle(GameAccount firstPlayer, GameAccount secondPlayer, int times, Action<Game> callback = null)
-    {
-        if(times < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(times));
-        }
-        if(firstPlayer is null)
-        {
-            throw new ArgumentNullException(nameof(firstPlayer));
-        }
-        if(secondPlayer is null)
-        {
-            throw new ArgumentNullException(nameof(secondPlayer));
-        }
+    private static readonly GamePool gamePool;
 
-        GameAccount current = null;
-        GameAccount opponent = null;
+    static Battlefield()
+    {
+        gamePool = new GamePool();
+    }
+
+    public static void SimulateBattle(StandardModeAccount firstPlayer, StandardModeAccount secondPlayer, int times, Action<Game> callback = null)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(times, 1);
+        ArgumentNullException.ThrowIfNull(firstPlayer);
+        ArgumentNullException.ThrowIfNull(secondPlayer);
+
+        StandardModeAccount current = null;
+        StandardModeAccount opponent = null;
 
         foreach (var item in Enumerable.Range(0, times))
         {
@@ -38,29 +40,40 @@ internal sealed class Battlefield
                 opponent = secondPlayer;
             }
 
-            var rating = Random.Shared.Next(10, 101);
+            Game game;
+            var gameType = Random.Shared.Next(0, 3);
+
+            switch (gameType)
+            {
+                case 0: game = gamePool.CreateStandradGame(current, opponent); break;
+                case 1: game = gamePool.CreateRatingToWinnerGame(current, opponent); break;
+                default: game = gamePool.CreateTrainingGame(current, opponent); break;
+            }
+
             var whoWin = Random.Shared.Next(0, 2);
 
-            var game = new Game(current, opponent, rating);
+            var winRating = game.GetWinRating();
+            var looseRating = game.GetLooseRating();
 
             if (whoWin == 0)
             {
-                var temp = current;
-                current = opponent;
-                opponent = temp;
+                game.FirstPlayerWin();
+                current.Log(new(opponent.UserName, winRating, game.Index, game.DisplayType));
+                opponent.Log(new(current.UserName, -looseRating, game.Index, game.DisplayType));
             }
-
-            current.OnWinGame(opponent.UserName, rating);
-            opponent.OnLooseGame(current.UserName, rating);
-            current.Log(new(opponent.UserName, rating, game.Index));
-            opponent.Log(new(current.UserName, -rating, game.Index));
+            else
+            {
+                game.FirstPlayerLoose();
+                current.Log(new(opponent.UserName, -looseRating, game.Index, game.DisplayType));
+                opponent.Log(new(current.UserName, winRating, game.Index, game.DisplayType));
+            }
 
             callback?.Invoke(game);
         }
     }
 
 
-    private static void SimulateBattleCore(List<GameAccount> accounts, int index, int times, Action<Game> callback)
+    private static void SimulateBattleCore(List<StandardModeAccount> accounts, int index, int times, Action<Game> callback)
     {
         var sencodPlayerIndex = 0;
         do
@@ -72,7 +85,7 @@ internal sealed class Battlefield
     }
 
 
-    public static void SimulateBattle(List<GameAccount> accounts, int times, Action<Game> callback = null)
+    public static void SimulateBattle(List<StandardModeAccount> accounts, int times, Action<Game> callback = null)
     {
         for(int i = 0; i < accounts.Count; i++)
         {
@@ -83,7 +96,6 @@ internal sealed class Battlefield
                     SimulateBattleCore(accounts, i, 1, callback);
                 }
             }
-            
         }
     }
 }
