@@ -14,18 +14,6 @@ internal sealed class RatingToWinnerGame : Game
 
     public override int GetLooseRating() => ZERO_RATING;
 
-    public override void FirstPlayerLoose()
-    {
-        FirstPlayer.OnLooseGame(this);
-        SecondPlayer.OnWinGame(this);
-    }
-
-    public override void FirstPlayerWin()
-    {
-        FirstPlayer.OnWinGame(this);
-        SecondPlayer.OnLooseGame(this);
-    }
-
     public override void RerollRating() 
         => Rating = Random.Shared.Next(WINNER_GAME_RATING_LOWER_BOUND, WINNER_GAME_RATING_UPPER_BOUND);
 

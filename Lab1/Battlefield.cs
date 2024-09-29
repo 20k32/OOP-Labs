@@ -9,11 +9,11 @@ namespace Lab1;
 
 internal sealed class Battlefield
 {
-    private static readonly GamePool gamePool;
+    private static readonly IGameFactory gameFactory;
 
     static Battlefield()
     {
-        gamePool = new GamePool();
+        gameFactory = new GameFactory();
     }
 
     public static void SimulateBattle(StandardModeAccount firstPlayer, StandardModeAccount secondPlayer, int times, Action<Game> callback = null)
@@ -45,27 +45,24 @@ internal sealed class Battlefield
 
             switch (gameType)
             {
-                case 0: game = gamePool.CreateStandradGame(current, opponent); break;
-                case 1: game = gamePool.CreateRatingToWinnerGame(current, opponent); break;
-                default: game = gamePool.CreateTrainingGame(current, opponent); break;
+                case 0: game = gameFactory.CreateStandradGame(); break;
+                case 1: game = gameFactory.CreateRatingToWinnerGame(); break;
+                default: game = gameFactory.CreateTrainingGame(); break;
             }
+            game.SetPlayers(current, opponent);
 
             var whoWin = Random.Shared.Next(0, 2);
-
+            
             var winRating = game.GetWinRating();
             var looseRating = game.GetLooseRating();
 
             if (whoWin == 0)
             {
                 game.FirstPlayerWin();
-                current.Log(new(opponent.UserName, winRating, game.Index, game.DisplayType));
-                opponent.Log(new(current.UserName, -looseRating, game.Index, game.DisplayType));
             }
             else
             {
                 game.FirstPlayerLoose();
-                current.Log(new(opponent.UserName, -looseRating, game.Index, game.DisplayType));
-                opponent.Log(new(current.UserName, winRating, game.Index, game.DisplayType));
             }
 
             callback?.Invoke(game);

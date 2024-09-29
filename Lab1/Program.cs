@@ -165,7 +165,7 @@ internal sealed class Program
     private static void OnGameCompleted(Game game)
     {
         Console.WriteLine($"* Game [{game.Index}]\n" +
-            $"between [{game.FirstPlayer.UserName}] and " +
-            $"[{game.SecondPlayer.UserName}]\nwith type [{game.DisplayType}]\non rating [w: {game.GetWinRating()}, l:{game.GetLooseRating()}] comleted.\n");
+            $"between [{game.FirstPlayerUserName}] and " +
+            $"[{game.SecondPlayerUserName}]\nwith type [{game.DisplayType}]\non rating [w: {game.GetWinRating()}, l:{game.GetLooseRating()}] comleted.\n");
     }
 }

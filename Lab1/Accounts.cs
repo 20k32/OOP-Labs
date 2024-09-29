@@ -12,7 +12,7 @@ internal sealed class Accounts
         _accounts = new();
     }
 
-    public static StandardModeAccount GetByName(string name) => 
+    public static StandardModeAccount GetByName(string name) =>
         _accounts
         .ReadFromHead()
         .First(gameAccount => gameAccount.UserName == name);
@@ -21,7 +21,7 @@ internal sealed class Accounts
     public static void Remove(StandardModeAccount account) => _accounts.RemoveFirstFromTail(account);
     public static void Add(StandardModeAccount account)
     {
-        if(account is null)
+        if (account is null)
         {
             throw new ArgumentNullException(nameof(account));
         }
@@ -30,7 +30,7 @@ internal sealed class Accounts
             .ReadFromHead()
             .FirstOrDefault(existingAccount => existingAccount.Equals(account));
 
-        if(existing is not null)
+        if (existing is not null)
         {
             throw new InvalidOperationException($"There is such entry in database.");
         }
