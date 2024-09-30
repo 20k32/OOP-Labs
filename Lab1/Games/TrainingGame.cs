@@ -10,9 +10,8 @@ namespace Lab1.Games;
 internal sealed class TrainingGame : Game
 {
     public override void RerollRating()
-    {
-        Rating = ZERO_RATING;
-    }
+        => Rating = GameRules.GenerateRatingForTrainingGame();
 
-    public override string DisplayType => "Training game";
+
+    public override string DisplayType => GameTypes.TrainingGame.BaseName;
 }

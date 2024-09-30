@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Lab1.Games.Logging;
 
 namespace Lab1.GameAccounts;
 
 internal sealed class ArcadeModeAccount : StandardModeAccount
 {
     public ArcadeModeAccount(string userName, int rating = 1, uint gamesCount = 0) : base(userName, rating, gamesCount)
+    { }
+
+    public ArcadeModeAccount(string userName, IEnumerable<GameHistoryUnit> games, int rating = 1, uint gamesCount = 0) : base(userName, games, rating, gamesCount)
     { }
 
     protected override int CalculateLooseRating(int rawRating)
@@ -28,5 +27,5 @@ internal sealed class ArcadeModeAccount : StandardModeAccount
         return resultRating;
     }
 
-    public override string DisplayType => "Arcade account";
+    public override string DisplayType => AccountTypes.ArcadeModeAccount.BaseName;
 }

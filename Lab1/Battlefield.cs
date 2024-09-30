@@ -1,22 +1,30 @@
 ﻿using DoubleLinkedList;
+using Lab1.Database.Service;
 using Lab1.GameAccounts;
 using Lab1.Games;
 using Lab1.Games.GameFactory;
 using System;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 
 namespace Lab1;
 
 internal sealed class Battlefield
 {
+    private static readonly IService<StandardModeAccount> accountService;
+    private static readonly IService<Game> gameService;
+
     private static readonly IGameFactory gameFactory;
 
     static Battlefield()
     {
-        gameFactory = new GameFactory();
+        accountService = IocContainer.GetService<IService<StandardModeAccount>>();
+        gameService = IocContainer.GetService<IService<Game>>();
+
+        gameFactory = GameFactory.Instance;
     }
 
-    public static void SimulateBattle(StandardModeAccount firstPlayer, StandardModeAccount secondPlayer, int times, Action<Game> callback = null)
+    public static async Task SimulateBattleAsync(StandardModeAccount firstPlayer, StandardModeAccount secondPlayer, int times, Func<Game, Task> callback)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(times, 1);
         ArgumentNullException.ThrowIfNull(firstPlayer);
@@ -52,25 +60,22 @@ internal sealed class Battlefield
             game.SetPlayers(current, opponent);
 
             var whoWin = Random.Shared.Next(0, 2);
-            
-            var winRating = game.GetWinRating();
-            var looseRating = game.GetLooseRating();
 
             if (whoWin == 0)
             {
-                game.FirstPlayerWin();
+                await game.FirstPlayerWinAsync(accountService);
             }
             else
             {
-                game.FirstPlayerLoose();
+                await game.FirstPlayerLooseAsync(accountService);
             }
 
-            callback?.Invoke(game);
+            await callback(game);
         }
     }
 
 
-    private static void SimulateBattleCore(List<StandardModeAccount> accounts, int index, int times, Action<Game> callback)
+    private static async Task SimulateBattleCoreAsync(List<StandardModeAccount> accounts, int index, int times, Func<Game, Task> callback)
     {
         var sencodPlayerIndex = 0;
         do
@@ -78,19 +83,28 @@ internal sealed class Battlefield
             sencodPlayerIndex = Random.Shared.Next(0, accounts.Count);
         } while (sencodPlayerIndex == index);
 
-        SimulateBattle(accounts[index], accounts[sencodPlayerIndex], times, callback);
+        await SimulateBattleAsync(accounts[index], accounts[sencodPlayerIndex], times, callback);
     }
 
 
-    public static void SimulateBattle(List<StandardModeAccount> accounts, int times, Action<Game> callback = null)
+    public static async Task SimulateBattleAsync(int times, Func<Game, Task> callback, CancellationToken ct)
     {
+        var accounts = new List<StandardModeAccount>();
+
+        await foreach (var item in accountService.GetAllEntitiesAsync())
+        {
+            accounts.Add(item);
+        }
+
         for(int i = 0; i < accounts.Count; i++)
         {
             for(int k = 0; k < times; k++)
             {
                 for (int j = 0; j < accounts.Count; j++)
                 {
-                    SimulateBattleCore(accounts, i, 1, callback);
+                    ct.ThrowIfCancellationRequested();
+
+                    await SimulateBattleCoreAsync(accounts, i, 1, callback);
                 }
             }
         }

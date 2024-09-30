@@ -1,26 +1,24 @@
-﻿using Lab1.GameAccounts;
+﻿using Lab1.Database.DTOs;
+using Lab1.Database.Service;
+using Lab1.GameAccounts;
 using NanoidDotNet;
 
 
 namespace Lab1.Games;
 
-internal abstract class Game
+internal abstract class Game : IMappable<GameDTO>
 {
     private StandardModeAccount _firstPlayer;
     private StandardModeAccount _secondPlayer;
 
-    protected const int ZERO_RATING = 0;
     protected int Rating;
 
     public string Id;
     public string Index;
-    public bool IsCompleted { get; protected set; }
     public virtual string DisplayType => nameof(Game);
 
     protected Game()
-    {
-        IsCompleted = false;
-    }
+    { }
 
     public string FirstPlayerUserName
     {
@@ -55,11 +53,10 @@ internal abstract class Game
         _secondPlayer = secondPlayer;
     }
 
-    public void FirstPlayerWin()
+    public async Task FirstPlayerWinAsync(IService<StandardModeAccount> accountService)
     {
         ArgumentNullException.ThrowIfNull(_firstPlayer);
         ArgumentNullException.ThrowIfNull(_secondPlayer);
-        ArgumentOutOfRangeException.ThrowIfEqual(IsCompleted, true);
 
         _firstPlayer.OnWinGame(this);
         _secondPlayer.OnLooseGame(this);
@@ -70,14 +67,14 @@ internal abstract class Game
         _firstPlayer.Log(new(_secondPlayer.UserName, winRating, Index, DisplayType));
         _secondPlayer.Log(new(_firstPlayer.UserName, -looseRating, Index, DisplayType));
 
-        IsCompleted = true;
+        await accountService.UpdateEntityAsync(_firstPlayer);
+        await accountService.UpdateEntityAsync(_secondPlayer);
     }
 
-    public void FirstPlayerLoose()
+    public async Task FirstPlayerLooseAsync(IService<StandardModeAccount> accountService)
     {
         ArgumentNullException.ThrowIfNull(_firstPlayer);
         ArgumentNullException.ThrowIfNull(_secondPlayer);
-        ArgumentOutOfRangeException.ThrowIfEqual(IsCompleted, true);
 
         _firstPlayer.OnLooseGame(this);
         _secondPlayer.OnWinGame(this);
@@ -88,12 +85,15 @@ internal abstract class Game
         _secondPlayer.Log(new(_firstPlayer.UserName, winRating, Index, DisplayType));
         _firstPlayer.Log(new(_secondPlayer.UserName, -looseRating, Index, DisplayType));
 
-        IsCompleted = true;
+        await accountService.UpdateEntityAsync(_firstPlayer);
+        await accountService.UpdateEntityAsync(_secondPlayer);
     }
 
     public abstract void RerollRating();
     public virtual int GetWinRating() => Rating;
     public virtual int GetLooseRating() => Rating;
+
+    public void SetRating(int rating) => Rating = rating;
 
     public sealed override bool Equals(object obj)
     {
@@ -107,4 +107,13 @@ internal abstract class Game
     }
 
     public sealed override int GetHashCode() => Id.GetHashCode();
+
+    public void Map(out GameDTO entity)
+        => entity = new(Id, Rating, DisplayType);
+
+    public override string ToString()
+        => $"{Id}\t{Index}\t{Rating}\t{FirstPlayerUserName}\t{SecondPlayerUserName}";
+
+    public string ToShortString() 
+        => $"{Id}\t{Rating}\t{DisplayType}";
 }

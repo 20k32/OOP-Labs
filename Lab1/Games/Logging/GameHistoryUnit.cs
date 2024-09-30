@@ -1,6 +1,6 @@
 ﻿namespace Lab1.Games.Logging;
 
-internal sealed class GameHistoryUnit
+internal sealed class GameHistoryUnit : ICloneable<GameHistoryUnit>
 {
     public readonly string OpponentName;
     public readonly int GainedRating;
@@ -25,4 +25,7 @@ internal sealed class GameHistoryUnit
     }
 
     public override int GetHashCode() => Index.GetHashCode();
+
+    public void Clone(out GameHistoryUnit value) 
+        => value = new(OpponentName, GainedRating, Index, GameType);
 }

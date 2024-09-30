@@ -1,10 +1,11 @@
 ﻿using DoubleLinkedList;
+using Lab1.Database.DTOs;
 using Lab1.Games;
 using Lab1.Games.Logging;
 
 namespace Lab1.GameAccounts;
 
-internal class StandardModeAccount
+internal class StandardModeAccount : IMappable<GameAccountDTO>
 {
     protected readonly DoubleLinkedList<GameHistoryUnit> GameHistory;
 
@@ -37,6 +38,22 @@ internal class StandardModeAccount
         GamesCount = gamesCount;
         GameHistory = new();
     }
+
+    public StandardModeAccount(string userName, IEnumerable<GameHistoryUnit> games, int rating = 1, uint gamesCount = 0)
+    {
+        UserName = userName;
+        CurrentRating = rating;
+        GamesCount = gamesCount;
+        GameHistory = new();
+
+        if(games is not null)
+        {
+            foreach (var item in games)
+            {
+                GameHistory.AddToEnd(item);
+            }
+        }
+    } 
     
     protected virtual int CalculateWinRating(int rawRating) => rawRating;
     
@@ -98,5 +115,17 @@ internal class StandardModeAccount
 
     public override int GetHashCode() => UserName.GetHashCode();
 
-    public virtual string DisplayType => "Standard account";
+    public void Map(out GameAccountDTO entity)
+    {
+        entity = new(UserName, CurrentRating, DisplayType, GameHistory.ReadFromHead());
+    }
+
+    public virtual string DisplayType => AccountTypes.StandardModeAccount.BaseName;
+
+    public override string ToString()
+    {
+        return $"[u:{UserName} r:{CurrentRating} t:{DisplayType}]";
+    }
+
+    public void SetRating(int rating) => CurrentRating = rating;
 }

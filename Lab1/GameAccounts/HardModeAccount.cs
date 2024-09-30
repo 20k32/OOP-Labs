@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lab1.Games.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,11 @@ internal sealed class HardModeAccount : StandardModeAccount
 
     public HardModeAccount(string userName, int winStreak, int rating = 1, uint gamesCount = 0) : base(userName, rating, gamesCount)
     {
+        _winStreak = winStreak;
+    }
+
+    public HardModeAccount(string userName, IEnumerable<GameHistoryUnit> games, int winStreak, int rating = 1, uint gamesCount = 0): base(userName, games, rating, gamesCount)
+    { 
         _winStreak = winStreak;
     }
 
@@ -40,5 +46,5 @@ internal sealed class HardModeAccount : StandardModeAccount
         return resultRating;
     }
 
-    public override string DisplayType => "Hard-mode account";
+    public override string DisplayType => AccountTypes.HardModeAccount.BaseName;
 }
