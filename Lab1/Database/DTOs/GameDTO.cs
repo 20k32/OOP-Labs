@@ -29,24 +29,15 @@ internal readonly struct GameDTO : IMappable<Game>
     {
         if (GameType == GameTypes.StandardGame.BaseName)
         {
-            entity = new StandardGame()
-            {
-                Id = Id
-            };
+            entity = GameFactory.CreateStandradGame(Id);
         }
         else if (GameType == GameTypes.RatingToWinnerGame.BaseName)
         {
-            entity = new RatingToWinnerGame()
-            {
-                Id = Id
-            };
+            entity = GameFactory.CreateRatingToWinnerGame(Id);
         }
         else if (GameType == GameTypes.TrainingGame.BaseName)
         {
-            entity = new TrainingGame()
-            {
-                Id = Id
-            };
+            entity = GameFactory.CreateTrainingGame(Id);
         }
         else
         {

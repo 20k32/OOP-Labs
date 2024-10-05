@@ -1,5 +1,4 @@
-﻿using DoubleLinkedList;
-using Lab1.Database.Service;
+﻿using Lab1.Database.Service;
 using Lab1.GameAccounts;
 using Lab1.Games;
 using Lab1.Games.GameFactory;
@@ -14,14 +13,10 @@ internal sealed class Battlefield
     private static readonly IService<StandardModeAccount> accountService;
     private static readonly IService<Game> gameService;
 
-    private static readonly IGameFactory gameFactory;
-
     static Battlefield()
     {
         accountService = IocContainer.GetService<IService<StandardModeAccount>>();
         gameService = IocContainer.GetService<IService<Game>>();
-
-        gameFactory = GameFactory.Instance;
     }
 
     public static async Task SimulateBattleAsync(StandardModeAccount firstPlayer, StandardModeAccount secondPlayer, int times, Func<Game, Task> callback)
@@ -53,9 +48,9 @@ internal sealed class Battlefield
 
             switch (gameType)
             {
-                case 0: game = gameFactory.CreateStandradGame(); break;
-                case 1: game = gameFactory.CreateRatingToWinnerGame(); break;
-                default: game = gameFactory.CreateTrainingGame(); break;
+                case 0: game = GameFactory.CreateStandradGame(); break;
+                case 1: game = GameFactory.CreateRatingToWinnerGame(); break;
+                default: game = GameFactory.CreateTrainingGame(); break;
             }
             game.SetPlayers(current, opponent);
 

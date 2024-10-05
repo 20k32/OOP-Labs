@@ -8,17 +8,20 @@ namespace Lab1.Games;
 
 internal abstract class Game : IMappable<GameDTO>
 {
+    private readonly string _id;
+    private readonly string _index;
+
     private StandardModeAccount _firstPlayer;
     private StandardModeAccount _secondPlayer;
 
-    protected int Rating;
-
-    public string Id;
-    public string Index;
+    protected int Rating;    
     public virtual string DisplayType => nameof(Game);
 
-    protected Game()
-    { }
+    protected Game(string id) =>
+        (_id, _index) = (id, Nanoid.Generate(Nanoid.Alphabets.NoLookAlikes, 10));
+
+    protected Game() => 
+        (_id, _index) = (Nanoid.Generate(), Nanoid.Generate(Nanoid.Alphabets.NoLookAlikes, 10));
 
     public string FirstPlayerUserName
     {
@@ -36,12 +39,6 @@ internal abstract class Game : IMappable<GameDTO>
             ArgumentNullException.ThrowIfNull(_secondPlayer);
             return _secondPlayer.UserName;
         }
-    }
-
-    public void GenerateId()
-    {
-        Id = Nanoid.Generate();
-        Index = Nanoid.Generate(Nanoid.Alphabets.NoLookAlikes, 10);
     }
 
     public void SetPlayers(StandardModeAccount firstPlayer, StandardModeAccount secondPlayer)
@@ -64,8 +61,8 @@ internal abstract class Game : IMappable<GameDTO>
         var winRating = GetWinRating();
         var looseRating = GetLooseRating();
 
-        _firstPlayer.Log(new(_secondPlayer.UserName, winRating, Index, DisplayType));
-        _secondPlayer.Log(new(_firstPlayer.UserName, -looseRating, Index, DisplayType));
+        _firstPlayer.Log(new(_secondPlayer.UserName, winRating, _index, DisplayType));
+        _secondPlayer.Log(new(_firstPlayer.UserName, -looseRating, _index, DisplayType));
 
         await accountService.UpdateEntityAsync(_firstPlayer);
         await accountService.UpdateEntityAsync(_secondPlayer);
@@ -82,8 +79,8 @@ internal abstract class Game : IMappable<GameDTO>
         var winRating = GetWinRating();
         var looseRating = GetLooseRating();
 
-        _secondPlayer.Log(new(_firstPlayer.UserName, winRating, Index, DisplayType));
-        _firstPlayer.Log(new(_secondPlayer.UserName, -looseRating, Index, DisplayType));
+        _secondPlayer.Log(new(_firstPlayer.UserName, winRating, _index, DisplayType));
+        _firstPlayer.Log(new(_secondPlayer.UserName, -looseRating, _index, DisplayType));
 
         await accountService.UpdateEntityAsync(_firstPlayer);
         await accountService.UpdateEntityAsync(_secondPlayer);
@@ -100,20 +97,20 @@ internal abstract class Game : IMappable<GameDTO>
         bool result = false;
         if (obj is Game game)
         {
-            result = Id.Equals(game.Id);
+            result = _id.Equals(game._id);
         }
 
         return result;
     }
 
-    public sealed override int GetHashCode() => Id.GetHashCode();
+    public sealed override int GetHashCode() => _id.GetHashCode();
 
     public void Map(out GameDTO entity)
-        => entity = new(Id, Rating, DisplayType);
+        => entity = new(_id, Rating, DisplayType);
 
     public override string ToString()
-        => $"{Id}\t{Index}\t{Rating}\t{FirstPlayerUserName}\t{SecondPlayerUserName}";
+        => $"{_id}\t{_index}\t{Rating}\t{FirstPlayerUserName}\t{SecondPlayerUserName}";
 
     public string ToShortString() 
-        => $"{Id}\t{Rating}\t{DisplayType}";
+        => $"{_id}\t{Rating}\t{DisplayType}";
 }

@@ -1,5 +1,4 @@
-﻿using DoubleLinkedList;
-using Lab1.Database.DTOs;
+﻿using Lab1.Database.DTOs;
 using Lab1.Games;
 using Lab1.Games.Logging;
 
@@ -7,36 +6,52 @@ namespace Lab1.GameAccounts;
 
 internal class StandardModeAccount : IMappable<GameAccountDTO>
 {
-    protected readonly DoubleLinkedList<GameHistoryUnit> GameHistory;
+    protected LinkedList<GameHistoryUnit> _gameHistory;
 
-    private int _currentRating;
-    
-    public string UserName { get; private set; }
-    
+    private string _userName;
+
+    public string UserName
+    {
+        get => _userName;
+        set => _userName = value;
+    }
+
+    private int _rating;
+
     public int CurrentRating
     {
-        get => _currentRating;
+        get => _rating;
         private set
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
 
             if (CurrentRating != value)
             {
-                _currentRating = value;
+                _rating = value;
             }
         }
     }
 
-    public uint GamesCount { get; private set; }
-    
-    public IEnumerable<GameHistoryUnit> GetHistory() => GameHistory.ReadFromHead();
+    private uint _gamesCount;
+    public uint GamesCount 
+    { 
+        get => _gamesCount; 
+        set => _gamesCount = value; 
+    }
+
+    public IEnumerable<GameHistoryUnit> GetHistory() => _gameHistory;
+
+    private StandardModeAccount()
+    {
+        _displayType = AccountTypes.StandardModeAccount.BaseName;
+    }
 
     public StandardModeAccount(string userName, int rating = 1, uint gamesCount = 0)
     {
         UserName = userName;
         CurrentRating = rating;
         GamesCount = gamesCount;
-        GameHistory = new();
+        _gameHistory = new();
     }
 
     public StandardModeAccount(string userName, IEnumerable<GameHistoryUnit> games, int rating = 1, uint gamesCount = 0)
@@ -44,21 +59,21 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
         UserName = userName;
         CurrentRating = rating;
         GamesCount = gamesCount;
-        GameHistory = new();
+        _gameHistory = new();
 
-        if(games is not null)
+        if (games is not null)
         {
             foreach (var item in games)
             {
-                GameHistory.AddToEnd(item);
+                _gameHistory.AddLast(item);
             }
         }
-    } 
-    
+    }
+
     protected virtual int CalculateWinRating(int rawRating) => rawRating;
-    
+
     protected virtual int CalculateLooseRating(int rawRating) => rawRating;
-    
+
     public void OnLooseGame(Game game)
     {
         var rawRating = game.GetLooseRating();
@@ -99,13 +114,13 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
         }
     }
 
-    public void Log(GameHistoryUnit gameHistory) => GameHistory.AddToEnd(gameHistory);
+    public void Log(GameHistoryUnit gameHistory) => _gameHistory.AddLast(gameHistory);
 
     public override bool Equals(object obj)
     {
         bool result = false;
 
-        if(obj is StandardModeAccount account)
+        if (obj is StandardModeAccount account)
         {
             result = UserName.Equals(account.UserName);
         }
@@ -117,10 +132,11 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
 
     public void Map(out GameAccountDTO entity)
     {
-        entity = new(UserName, CurrentRating, DisplayType, GameHistory.ReadFromHead());
+        entity = new(UserName, CurrentRating, DisplayType, _gameHistory);
     }
 
-    public virtual string DisplayType => AccountTypes.StandardModeAccount.BaseName;
+    protected string _displayType;
+    public string DisplayType => _displayType;
 
     public override string ToString()
     {

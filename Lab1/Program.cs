@@ -1,12 +1,25 @@
 ﻿using Lab1.Database;
+using Lab1.Database.DTOs;
 using Lab1.Database.Service;
 using Lab1.GameAccounts;
 using Lab1.Games;
+using Lab1.Games.Logging;
+using Lab1.Mapper;
+using System.Diagnostics;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Channels;
 using System.Xml.Linq;
 
 namespace Lab1;
+
+class Example
+{
+    private readonly int _myReadonlyField = 42;
+
+    public int GetReadonlyFieldValue() => _myReadonlyField;
+}
 
 
 internal sealed class Program
@@ -92,244 +105,341 @@ internal sealed class Program
 
 
     private static async Task Main(string[] args)
-    {        
-        var gameLoadingTask = gameService.LoadDataAsync();
+    {
+        /*var gameAccountDTO = new GameAccountDTO("asdf", 123, "hahaha", Enumerable.Empty<GameHistoryUnit>());
+        gameAccountDTO.GameHistory.AddLast(new GameHistoryUnit("asdf", 34145, "sadfklj", "auisdjfh"));
+        var inType = typeof(GameAccountDTO);
+        var outType = typeof(StandardModeAccount);
+
+
+        var outInstancefileds = outType.GetFields(BindingFlags.Instance 
+            | BindingFlags.Public
+            | BindingFlags.NonPublic)
+            .Concat(outType.BaseType.GetFields(BindingFlags.Instance
+            | BindingFlags.Public
+            | BindingFlags.NonPublic))
+            .ToArray();
+
+        var inInstanceFields = inType.GetFields(BindingFlags.Instance
+            | BindingFlags.Public
+            | BindingFlags.NonPublic)
+            .Concat(inType.BaseType.GetFields(BindingFlags.Instance
+            | BindingFlags.Public
+            | BindingFlags.NonPublic))
+            .ToArray();
+
+        List<Expression> assignExpression= new();
+
+        var newExpression = Expression.New(outType); 
+        var variable = Expression.Variable(outType, "standardModeAccount"); // standardModeAccount
+        var inVariable = Expression.Variable(inType, "gameAccountDto");
+        var assignVarToNew = Expression.Assign(variable, newExpression); // standardModeAccount = new StandardModeAccount()
+
+        assignExpression.Add(assignVarToNew);
+
+        FieldInfo TryFindField(FieldInfo[] infos, string fieldName)
+        {
+            foreach(var info in infos)
+            {
+                string searchName = info.Name.ToLower();
+                string searchFieldName = fieldName.ToLower();
+
+                if (info.Name.StartsWith('_'))
+                {
+                    searchName = info.Name.Substring(1);
+                }
+                if (fieldName.StartsWith('_'))
+                {
+                    searchFieldName = fieldName.Substring(1);
+                }
+
+                if(searchFieldName == searchName)
+                {
+                    return info;
+                }
+            }
+
+            return null;
+        }
+
+
+        foreach (var inField in inInstanceFields)
+        {
+            var existingOutInstanceField = TryFindField(outInstancefileds, inField.Name);
+
+            if (existingOutInstanceField is not null)
+            {
+                var outInstanceVariable = Expression.Field(variable, existingOutInstanceField);
+                var field = Expression.Field(inVariable, inField.Name);
+
+                var assign = Expression.Assign(outInstanceVariable, field);
+                assignExpression.Add(assign);
+            }
+        }
+
+        assignExpression.Add(variable);
+        var blockExpression = Expression.Block(new[] {variable}, assignExpression);
+
+        var lambda = Expression.Lambda(blockExpression, inVariable);
+
+        var func = (Func<GameAccountDTO, StandardModeAccount>)lambda.Compile();
+        Console.WriteLine(func);
+        var entity = func(gameAccountDTO);
+
+        foreach(var item in entity.GetHistory())
+        {
+            Console.WriteLine(item);
+        }*/
+
+        var gameAccountDTO = new GameAccountDTO("asdf", 123, "hahaha", Enumerable.Empty<GameHistoryUnit>());
+        gameAccountDTO.GameHistory.AddLast(new GameHistoryUnit("asdf", 34145, "sadfklj", "auisdjfh"));
+        SimpleMapper.Map(gameAccountDTO, out StandardModeAccount account);
+
+        Console.WriteLine(account);
+        foreach(var item in account.GetHistory())
+        {
+            Console.WriteLine(item);
+        }
+
+        Console.ReadKey();
+
+        //var gameLoadingTask = gameService.LoadDataAsync();
         //gameLoadingTask.Start();
 
-        bool spin = true;
+        /* bool spin = true;
 
-        while (spin)
-        {
-            Console.Clear();
-            Console.Write("q - Create characters." +
-                "\nw - Get all players." +
-                "\ne - Get all games" +
-                "\nr - Search for a player." +
-                "\nt - Search for a game" +
-                "\na - Update player" +
-                "\ns - Update game" +
-                "\nd - Delete player" +
-                "\nf - Delete game" +
-                "\nz - Add player" +
-                "\nx - Simulate bloody massacare" +
-                "\nc - Exit" +
-                "\nAction -> ");
+         while (spin)
+         {
+             Console.Clear();
+             Console.Write("q - Create characters." +
+                 "\nw - Get all players." +
+                 "\ne - Get all games" +
+                 "\nr - Search for a player." +
+                 "\nt - Search for a game" +
+                 "\na - Update player" +
+                 "\ns - Update game" +
+                 "\nd - Delete player" +
+                 "\nf - Delete game" +
+                 "\nz - Add player" +
+                 "\nx - Simulate bloody massacare" +
+                 "\nc - Exit" +
+                 "\nAction -> ");
 
-            var action = Console.ReadLine();
+             var action = Console.ReadLine();
 
-            Console.Clear();
+             Console.Clear();
 
-            switch (action)
-            {
-                case "q":
-                    {
-                        Console.WriteLine("Data is loading, please wait.");
-                        await gameLoadingTask;
-                        await accountService.LoadDataAsync();
-                        Console.WriteLine("Data loaded.\nPress any key to exit.");
-                    }; break;
+             switch (action)
+             {
+                 case "q":
+                     {
+                         Console.WriteLine("Data is loading, please wait.");
+                         await gameLoadingTask;
+                         await accountService.LoadDataAsync();
+                         Console.WriteLine("Data loaded.\nPress any key to exit.");
+                     }; break;
 
-                case "w":
-                    {
-                        Console.WriteLine("All players in db:\n");
-                        
-                        await foreach(var gameAccount in accountService.GetAllEntitiesAsync())
-                        {
-                            Console.WriteLine(gameAccount);
-                        }
-                        Console.WriteLine("\n(end)");
-                    }; break;
-                case "e":
-                    {
-                        Console.WriteLine("All games in db:\n");
+                 case "w":
+                     {
+                         Console.WriteLine("All players in db:\n");
 
-                        await foreach (var game in gameService.GetAllEntitiesAsync())
-                        {
-                            Console.WriteLine(game.ToShortString());
-                        }
+                         await foreach(var gameAccount in accountService.GetAllEntitiesAsync())
+                         {
+                             Console.WriteLine(gameAccount);
+                         }
+                         Console.WriteLine("\n(end)");
+                     }; break;
+                 case "e":
+                     {
+                         Console.WriteLine("All games in db:\n");
 
-                        Console.WriteLine("\n(end)");
-                    }; break;
-                case "r":
-                    {
-                        var existingPlayer = await SearchPlayerAsync(accountService);
-                        if(existingPlayer is null)
-                        {
-                            Console.WriteLine("There is no such player in database.");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Result: {existingPlayer.ToString()}");
-                            var history = existingPlayer.GetHistory();
-                            if (history is not null)
-                            {
-                                Console.WriteLine("History");
-                                foreach (var item in history)
-                                {
-                                    Console.WriteLine(item);
-                                }
-                                Console.WriteLine("(end)");
-                            }
-                        }                            
-                    }; break;
-                case "t":
-                    {
-                        var existingGame = await SearchGameAsync(gameService);
-                        if (existingGame is null)
-                        {
-                            Console.WriteLine("There is no such game in database.");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Result: {existingGame.ToShortString()}");
-                        }
-                    }; break;
+                         await foreach (var game in gameService.GetAllEntitiesAsync())
+                         {
+                             Console.WriteLine(game.ToShortString());
+                         }
 
-                case "a":
-                    {
-                        var existingPlayer = await SearchPlayerAsync(accountService);
-                        if (existingPlayer is null)
-                        {
-                            Console.WriteLine("There is no such player in database.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("There is such player.");
-                            Console.WriteLine("Enter new rating for player: ");
-                            var ratingStr = Console.ReadLine();
+                         Console.WriteLine("\n(end)");
+                     }; break;
+                 case "r":
+                     {
+                         var existingPlayer = await SearchPlayerAsync(accountService);
+                         if(existingPlayer is null)
+                         {
+                             Console.WriteLine("There is no such player in database.");
+                         }
+                         else
+                         {
+                             Console.WriteLine($"Result: {existingPlayer.ToString()}");
+                             var history = existingPlayer.GetHistory();
+                             if (history is not null)
+                             {
+                                 Console.WriteLine("History");
+                                 foreach (var item in history)
+                                 {
+                                     Console.WriteLine(item);
+                                 }
+                                 Console.WriteLine("(end)");
+                             }
+                         }                            
+                     }; break;
+                 case "t":
+                     {
+                         var existingGame = await SearchGameAsync(gameService);
+                         if (existingGame is null)
+                         {
+                             Console.WriteLine("There is no such game in database.");
+                         }
+                         else
+                         {
+                             Console.WriteLine($"Result: {existingGame.ToShortString()}");
+                         }
+                     }; break;
 
-                            if(int.TryParse(ratingStr, out var rating) && rating > 1)
-                            {
-                                existingPlayer.SetRating(rating);
-                                await accountService.UpdateEntityAsync(existingPlayer);
-                            }
-                            else
-                            {
-                                Console.WriteLine("Unable to parse rating.");
-                            }
-                        }
+                 case "a":
+                     {
+                         var existingPlayer = await SearchPlayerAsync(accountService);
+                         if (existingPlayer is null)
+                         {
+                             Console.WriteLine("There is no such player in database.");
+                         }
+                         else
+                         {
+                             Console.WriteLine("There is such player.");
+                             Console.WriteLine("Enter new rating for player: ");
+                             var ratingStr = Console.ReadLine();
 
-                    }; break;
-                case "s":
-                    {
-                        var existingGame = await SearchGameAsync(gameService);
-                        if (existingGame is null)
-                        {
-                            Console.WriteLine("There is no such game in database.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("There is such game.");
-                            Console.WriteLine("Enter new rating: ");
-                            var ratingStr = Console.ReadLine();
-                            if (int.TryParse(ratingStr, out var rating) && rating > 1)
-                            {
-                                existingGame.SetRating(rating);
-                                await gameService.UpdateEntityAsync(existingGame);
-                            }
-                            else
-                            {
-                                Console.WriteLine("Unable to parse rating.");
-                            }
-                        }
+                             if(int.TryParse(ratingStr, out var rating) && rating > 1)
+                             {
+                                 existingPlayer.SetRating(rating);
+                                 await accountService.UpdateEntityAsync(existingPlayer);
+                             }
+                             else
+                             {
+                                 Console.WriteLine("Unable to parse rating.");
+                             }
+                         }
 
-                    }; break;
-                case "d":
-                    {
-                        var existingPlayer = await SearchPlayerAsync(accountService);
-                        if (existingPlayer is null)
-                        {
-                            Console.WriteLine("There is no such player in database.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("There is such player.");
-                            await accountService.RemoveEntityAsync(existingPlayer);
-                            Console.WriteLine("The player is removed from database.");
-                        }
+                     }; break;
+                 case "s":
+                     {
+                         var existingGame = await SearchGameAsync(gameService);
+                         if (existingGame is null)
+                         {
+                             Console.WriteLine("There is no such game in database.");
+                         }
+                         else
+                         {
+                             Console.WriteLine("There is such game.");
+                             Console.WriteLine("Enter new rating: ");
+                             var ratingStr = Console.ReadLine();
+                             if (int.TryParse(ratingStr, out var rating) && rating > 1)
+                             {
+                                 existingGame.SetRating(rating);
+                                 await gameService.UpdateEntityAsync(existingGame);
+                             }
+                             else
+                             {
+                                 Console.WriteLine("Unable to parse rating.");
+                             }
+                         }
 
-                    }; break;
-                case "f":
-                    {
-                        var existingGame = await SearchGameAsync(gameService);
-                        if (existingGame is null)
-                        {
-                            Console.WriteLine("There is no such game in database.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("There is such game.");
-                            await gameService.RemoveEntityAsync(existingGame);
-                            Console.WriteLine("The game is removed from database.");
-                        }
+                     }; break;
+                 case "d":
+                     {
+                         var existingPlayer = await SearchPlayerAsync(accountService);
+                         if (existingPlayer is null)
+                         {
+                             Console.WriteLine("There is no such player in database.");
+                         }
+                         else
+                         {
+                             Console.WriteLine("There is such player.");
+                             await accountService.RemoveEntityAsync(existingPlayer);
+                             Console.WriteLine("The player is removed from database.");
+                         }
 
-                    }; break;
-                case "z":
-                    {
-                        var userName = SubmitPlayerName(1);
-                        Console.WriteLine("Enter account type:\n1 - standard\n2 - hard\n3 - arcate\nAction -> ");
-                        var accontType = Console.ReadLine();
-                        var account = ChooseAccoutType(accontType, userName);
-                        Console.WriteLine($"You've choosen {account.DisplayType}.");
-                        await accountService.AddEntityAsync(account);
-                    }; break;
+                     }; break;
+                 case "f":
+                     {
+                         var existingGame = await SearchGameAsync(gameService);
+                         if (existingGame is null)
+                         {
+                             Console.WriteLine("There is no such game in database.");
+                         }
+                         else
+                         {
+                             Console.WriteLine("There is such game.");
+                             await gameService.RemoveEntityAsync(existingGame);
+                             Console.WriteLine("The game is removed from database.");
+                         }
 
-                case "x":
-                    {
-                        using (var cts = new CancellationTokenSource())
-                        {
-                            var task = Battlefield.SimulateBattleAsync(1, OnGameCompletedAsync, cts.Token);
+                     }; break;
+                 case "z":
+                     {
+                         var userName = SubmitPlayerName(1);
+                         Console.WriteLine("Enter account type:\n1 - standard\n2 - hard\n3 - arcate\nAction -> ");
+                         var accontType = Console.ReadLine();
+                         var account = ChooseAccoutType(accontType, userName);
+                         Console.WriteLine($"You've choosen {account.DisplayType}.");
+                         await accountService.AddEntityAsync(account);
+                     }; break;
 
-                            _ = task.ContinueWith(t =>
-                            {
-                                if (t.IsCompleted)
-                                {
-                                    Console.Clear();
-                                    Console.WriteLine("Bloody massaccre sucessfully completed.");
-                                }
-                            }, TaskContinuationOptions.OnlyOnRanToCompletion);
+                 case "x":
+                     {
+                         using (var cts = new CancellationTokenSource())
+                         {
+                             var task = Battlefield.SimulateBattleAsync(1, OnGameCompletedAsync, cts.Token);
 
-                            string result = string.Empty;
-                            
-                            while (!task.IsCompleted)
-                            {
-                                if (!cts.IsCancellationRequested)
-                                {
-                                    Console.WriteLine("You stand right in the middle of bloody massacre and hear nothing but pleas for mercy and gunfire.\nStop the torment and go to eternal rest by typing 'stop'.");
-                                    result = Console.ReadLine(); 
+                             _ = task.ContinueWith(t =>
+                             {
+                                 if (t.IsCompleted)
+                                 {
+                                     Console.Clear();
+                                     Console.WriteLine("Bloody massaccre sucessfully completed.");
+                                 }
+                             }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
-                                    if (result == "stop")
-                                    {
-                                        cts.Cancel();
-                                        Console.WriteLine("Echo of war and the smell of caked blood makes you wake up.");
-                                    }
-                                    else
-                                    {
-                                        Console.Clear();
-                                    }
-                                }
-                                else
-                                {
-                                    Console.Write("*");
-                                    await Task.Delay(5);
-                                }
-                            } 
+                             string result = string.Empty;
 
-                            if(task.IsCompleted && !cts.IsCancellationRequested)
-                            {
-                                Console.WriteLine("You've survived.");
-                            }
-                        }
-                    }; break;
+                             while (!task.IsCompleted)
+                             {
+                                 if (!cts.IsCancellationRequested)
+                                 {
+                                     Console.WriteLine("You stand right in the middle of bloody massacre and hear nothing but pleas for mercy and gunfire.\nStop the torment and go to eternal rest by typing 'stop'.");
+                                     result = Console.ReadLine(); 
 
-                case "c" :spin = false; break;
-            }
-            Console.ReadLine();
-        }
+                                     if (result == "stop")
+                                     {
+                                         cts.Cancel();
+                                         Console.WriteLine("Echo of war and the smell of caked blood makes you wake up.");
+                                     }
+                                     else
+                                     {
+                                         Console.Clear();
+                                     }
+                                 }
+                                 else
+                                 {
+                                     Console.Write("*");
+                                     await Task.Delay(5);
+                                 }
+                             } 
+
+                             if(task.IsCompleted && !cts.IsCancellationRequested)
+                             {
+                                 Console.WriteLine("You've survived.");
+                             }
+                         }
+                     }; break;
+
+                 case "c" :spin = false; break;
+             }
+        Console.ReadLine();
+        }*/
     }
 
-    private static async Task OnGameCompletedAsync(Game game)
+    /*private static async Task OnGameCompletedAsync(Game game)
     {
         await gameService.AddEntityAsync(game);
-    }
+    }*/
 }

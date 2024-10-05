@@ -1,43 +1,52 @@
-﻿using Lab1.GameAccounts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Lab1.Games.GameFactory;
 
-namespace Lab1.Games.GameFactory;
-
-internal class GameFactory : IGameFactory
+internal static class GameFactory
 {
-    private GameFactory()
-    { }
-
-    private static GameFactory _instance;
-    public static GameFactory Instance => _instance ??= new GameFactory();
-
-    private void SetupGame(Game game)
+    private static void SetupGame(Game game)
     {
-        game.GenerateId();
         game.RerollRating();
     }
 
-    public Game CreateRatingToWinnerGame()
+    public static Game CreateRatingToWinnerGame(string id)
     {
-        var result = new RatingToWinnerGame();
+        var result = (RatingToWinnerGame)Activator.CreateInstance(typeof(RatingToWinnerGame), id);
         SetupGame(result);
         return result;
     }
 
-    public Game CreateStandradGame()
+    public static Game CreateStandradGame(string id)
     {
-        var result = new StandardGame();
+        var result = (StandardGame)Activator.CreateInstance(typeof(StandardGame), id);
         SetupGame(result);
         return result;
     }
 
-    public Game CreateTrainingGame()
+    public static Game CreateTrainingGame(string id)
     {
-        var result = new TrainingGame();
+        var result = (TrainingGame)Activator.CreateInstance(typeof(TrainingGame), id);
+        SetupGame(result);
+        return result;
+    }
+
+    public static Game CreateStandradGame()
+    {
+        var result = Activator.CreateInstance<StandardGame>();
+        SetupGame(result);
+        return result;
+    }
+
+
+    public static Game CreateTrainingGame()
+    {
+        var result = Activator.CreateInstance<TrainingGame>();
+        SetupGame(result);
+        return result;
+    }
+
+
+    public static Game CreateRatingToWinnerGame()
+    {
+        var result = Activator.CreateInstance<RatingToWinnerGame>();
         SetupGame(result);
         return result;
     }

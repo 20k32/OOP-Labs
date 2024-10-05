@@ -14,19 +14,20 @@ internal sealed class HardModeAccount : StandardModeAccount
     public HardModeAccount(string userName, int winStreak, int rating = 1, uint gamesCount = 0) : base(userName, rating, gamesCount)
     {
         _winStreak = winStreak;
+        _displayType = AccountTypes.StandardModeAccount.BaseName;
     }
 
     public HardModeAccount(string userName, IEnumerable<GameHistoryUnit> games, int winStreak, int rating = 1, uint gamesCount = 0): base(userName, games, rating, gamesCount)
     { 
         _winStreak = winStreak;
+        _displayType = AccountTypes.StandardModeAccount.BaseName;
     }
 
     protected override int CalculateWinRating(int rawRating)
     {
         var resultRating = rawRating;
 
-        var lastMatches = GameHistory
-            .ReadFromTail()
+        var lastMatches = _gameHistory
             .Take(_winStreak)
             .Where(match => match.GainedRating > 0);
 
@@ -45,6 +46,4 @@ internal sealed class HardModeAccount : StandardModeAccount
 
         return resultRating;
     }
-
-    public override string DisplayType => AccountTypes.HardModeAccount.BaseName;
 }
