@@ -1,11 +1,10 @@
 ﻿using Lab1.GameAccounts;
-
+using Lab1.Shared;
 
 namespace Lab1.Games;
 
 internal sealed class StandardGame : Game
 {
-
     private StandardGame() : base()
     { }
 
@@ -14,6 +13,4 @@ internal sealed class StandardGame : Game
 
     public override void RerollRating()
         => Rating = GameRules.GenerateRatingForStandardGame();
-
-    public override string DisplayType => GameTypes.StandardGame.BaseName;
 }

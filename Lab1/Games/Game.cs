@@ -1,27 +1,45 @@
 ﻿using Lab1.Database.DTOs;
 using Lab1.Database.Service;
 using Lab1.GameAccounts;
+using Lab1.Mapper;
+using Lab1.Shared;
 using NanoidDotNet;
-
 
 namespace Lab1.Games;
 
-internal abstract class Game : IMappable<GameDTO>
+[Mappable(typeof(GameDTO))]
+internal abstract class Game
 {
-    private readonly string _id;
-    private readonly string _index;
+    private string _id;
+    private string _index;
 
     private StandardModeAccount _firstPlayer;
     private StandardModeAccount _secondPlayer;
 
-    protected int Rating;    
-    public virtual string DisplayType => nameof(Game);
+    protected int Rating;
 
-    protected Game(string id) =>
+    protected string _displayType;
+    public string DisplayType => _displayType;
+
+    private void InitFields()
+    {
+        var unit = Resolver.ResolveGameType(this);
+        _displayType = unit.BaseName;
+    }
+
+    protected Game(string id)
+    {
         (_id, _index) = (id, Nanoid.Generate(Nanoid.Alphabets.NoLookAlikes, 10));
+        InitFields();
+    }
+        
 
-    protected Game() => 
+    protected Game()
+    {
         (_id, _index) = (Nanoid.Generate(), Nanoid.Generate(Nanoid.Alphabets.NoLookAlikes, 10));
+        InitFields();
+    } 
+        
 
     public string FirstPlayerUserName
     {
@@ -106,7 +124,7 @@ internal abstract class Game : IMappable<GameDTO>
     public sealed override int GetHashCode() => _id.GetHashCode();
 
     public void Map(out GameDTO entity)
-        => entity = new(_id, Rating, DisplayType);
+        => SimpleMapper.Map(this, out entity);
 
     public override string ToString()
         => $"{_id}\t{_index}\t{Rating}\t{FirstPlayerUserName}\t{SecondPlayerUserName}";

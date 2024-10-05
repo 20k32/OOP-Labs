@@ -1,5 +1,6 @@
 ﻿using Lab1.Games;
 using Lab1.Games.GameFactory;
+using Lab1.Mapper;
 using NanoidDotNet;
 using System;
 using System.Collections.Generic;
@@ -11,41 +12,27 @@ using System.Threading.Tasks;
 
 namespace Lab1.Database.DTOs;
 
-internal readonly struct GameDTO : IMappable<Game>
+[Mappable(typeof(Game))]
+internal struct GameDTO
 {
-    public string Id { get; }
-    public int Rating { get; }
-    public string GameType { get; }
+    private string _id;
+    public string Id => _id;
 
-    public GameDTO(string id, int rating, string gameType)
-        => (Id, Rating, GameType) = (id, rating, gameType);
+    private int _rating;
+    public int Rating => _rating;
+
+    private string _displayType;
+    public string DisplayType => _displayType;
+
+    public GameDTO(string id, int rating, string displayType)
+        => (_id, _rating, _displayType) = (id, rating, displayType);
 
     public GameDTO()
     {
-        Id = Nanoid.Generate();
+        //_id = Nanoid.Generate();
     }
 
-    public void Map(out Game entity)
-    {
-        if (GameType == GameTypes.StandardGame.BaseName)
-        {
-            entity = GameFactory.CreateStandradGame(Id);
-        }
-        else if (GameType == GameTypes.RatingToWinnerGame.BaseName)
-        {
-            entity = GameFactory.CreateRatingToWinnerGame(Id);
-        }
-        else if (GameType == GameTypes.TrainingGame.BaseName)
-        {
-            entity = GameFactory.CreateTrainingGame(Id);
-        }
-        else
-        {
-            entity = null;
-        }
-
-        entity?.SetRating(Rating);
-    }
+    public void Map(out Game entity) => SimpleMapper.Map(this, out entity);
 
     public override bool Equals([NotNullWhen(true)] object obj)
     {
@@ -60,4 +47,6 @@ internal readonly struct GameDTO : IMappable<Game>
     }
 
     public override int GetHashCode() => Id.GetHashCode();
+
+    public new Type GetType() => typeof(GameDTO);
 }

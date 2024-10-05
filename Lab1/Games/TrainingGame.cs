@@ -1,4 +1,5 @@
 ﻿using Lab1.GameAccounts;
+using Lab1.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,4 @@ internal sealed class TrainingGame : Game
 
     public override void RerollRating()
         => Rating = GameRules.GenerateRatingForTrainingGame();
-
-
-    public override string DisplayType => GameTypes.TrainingGame.BaseName;
 }

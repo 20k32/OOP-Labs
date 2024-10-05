@@ -9,22 +9,19 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Lab1.Shared;
 
 namespace Lab1.Database.Context;
 
-internal sealed class GameAccountDbSet : IAsyncDbSet<GameAccountDTO>
+internal sealed class GameAccountDbSet : AsyncDbSet<GameAccountDTO>
 {
-    private LinkedList<GameAccountDTO> _data;
+    public GameAccountDbSet() : base()
+    { }
 
-    public GameAccountDbSet()
-    {
-        _data = new();
-    }
-
-
-    public async Task InitAsync()
+    public override async Task InitAsync()
     {
         await Task.Delay(100);
+        Data = new();
 
         foreach (var item in Enumerable.Range('a', 'z' - 'a' + 1))
         {
@@ -32,122 +29,20 @@ internal sealed class GameAccountDbSet : IAsyncDbSet<GameAccountDTO>
             var accountName = ((char)item).ToString();
             string accountType = string.Empty;
 
-            if (randomIndex == AccountTypes.StandardModeAccount.AssociatedIndex)
+            if (randomIndex == Resolver.AccountTypes.StandardModeAccount.AssociatedIndex)
             {
-                accountType = AccountTypes.StandardModeAccount.BaseName;
+                accountType = Resolver.AccountTypes.StandardModeAccount.BaseName;
             }
-            else if (randomIndex == AccountTypes.HardModeAccount.AssociatedIndex)
+            else if (randomIndex == Resolver.AccountTypes.HardModeAccount.AssociatedIndex)
             {
-                accountType = AccountTypes.HardModeAccount.BaseName;
+                accountType = Resolver.AccountTypes.HardModeAccount.BaseName;
             }
             else
             {
-                accountType = AccountTypes.ArcadeModeAccount.BaseName;
+                accountType = Resolver.AccountTypes.ArcadeModeAccount.BaseName;
             }
 
-            _data.AddLast(new GameAccountDTO(accountName, 1, accountType, Enumerable.Empty<GameHistoryUnit>()));
+            Data.AddLast(new GameAccountDTO(accountName, 1, accountType, Enumerable.Empty<GameHistoryUnit>()));
         }
-    }
-
-    public async IAsyncEnumerable<GameAccountDTO> GetAllAsync()
-    {
-        if(_data is null)
-        {
-            yield break;
-        }
-
-        foreach(var item in _data)
-        {
-            await Task.Delay(100);
-            yield return item;
-        }
-    }
-
-    public async Task<GameAccountDTO> GetOneAsync(GameAccountDTO account)
-    {
-        if (_data is null)
-        {
-            return default;
-        }
-
-        GameAccountDTO result = default;
-
-        await Task.Delay(100);
-        var node = _data.Find(account);
-
-        if (node is not null)
-        {
-            result = node.Value;
-        }
-
-        return result;
-    }
-
-    public async Task RemoveOneAsync(GameAccountDTO account)
-    {
-        if (_data is null)
-        {
-            return;
-        }
-
-        await Task.Delay(100);
-
-        var node = _data.Find(account);
-
-        if (node is not null)
-        {
-            _data.Remove(node);
-        }
-    }
-
-    public async Task UpdateOneAsync(GameAccountDTO account)
-    {
-        if (_data is null)
-        {
-            return;
-        }
-
-        await Task.Delay(100);
-
-        GameAccountDTO itemToDelete = default;
-
-        foreach(var item in _data)
-        {
-            if (item.Equals(account))
-            {
-                itemToDelete = item;
-                break;
-            }
-        }
-        
-        if (!itemToDelete.Equals(account)) 
-        {
-            throw new ArgumentOutOfRangeException($"{nameof(account)} is out of range of valid values.");
-        }
-
-        _data.Remove(account);
-        _data.AddLast(account);
-    }
-
-    public async Task AddOneAsync(GameAccountDTO entity)
-    {
-        if (_data is null)
-        {
-            return;
-        }
-
-        await Task.Delay(100);
-        _data.AddLast(entity);
-    }
-
-    public async Task ClearAsync()
-    {
-        if (_data is null)
-        {
-            return;
-        }
-
-        await Task.Delay(100);
-        _data.Clear();
     }
 }

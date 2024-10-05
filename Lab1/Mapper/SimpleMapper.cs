@@ -1,5 +1,7 @@
 ﻿using Lab1.Database.DTOs;
 using Lab1.GameAccounts;
+using Lab1.Games;
+using Lab1.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,140 +10,138 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lab1.Mapper
+namespace Lab1.Mapper;
+
+/// <summary>
+/// This is conventional mapper.
+/// All ref-ce types are non-deep copied from object on which .Map method was called.
+/// Mapper is case-insensetive and absorbs '_' prefix of filed name. 
+/// </summary>
+
+internal static class SimpleMapper
 {
-    internal static class SimpleMapper
+    private readonly struct CompositeTypeKey
     {
-        private readonly struct CompositeTypeKey
+        public readonly KeyValuePair<Type, Type> Pair;
+
+        public CompositeTypeKey(Type keyA, Type keyB) => Pair = new(keyA, keyB);
+
+        public override bool Equals(object obj)
         {
-            public readonly KeyValuePair<Type, Type> Value;
-
-            public CompositeTypeKey(Type keyA, Type keyB) => Value = new(keyA, keyB);
-
-            public override bool Equals(object obj)
+            bool result = false;
+            if (obj is CompositeTypeKey compositeKey)
             {
-                bool result = false;
-                if (obj is CompositeTypeKey compositeKey)
-                {
-                    result = compositeKey.Value.Key.Equals(Value.Key)
-                        && compositeKey.Value.Value.Equals(Value.Value); 
-                }
-
-                    return result;
+                result = compositeKey.Pair.Key.Equals(Pair.Key)
+                    && compositeKey.Pair.Value.Equals(Pair.Value); 
             }
 
-            public override int GetHashCode() => Value.GetHashCode();
+                return result;
         }
 
-        private static readonly Dictionary<CompositeTypeKey, Delegate> _mapFunctions;
+        public override int GetHashCode() => Pair.GetHashCode();
+    }
 
-        static SimpleMapper()
+    private static readonly Dictionary<CompositeTypeKey, Delegate> _mapFunctions;
+
+    static SimpleMapper()
+    {
+        _mapFunctions = new();
+    }
+
+    private const BindingFlags fieldAccessModifiers = 
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+    private static IEnumerable<FieldInfo> GetFieldInfoEnumerable(Type type)
+    {
+        IEnumerable<FieldInfo> result =
+        type.GetFields(BindingFlags.Instance
+        | BindingFlags.Public
+        | BindingFlags.NonPublic);
+
+        if (type.BaseType is not null)
         {
-            _mapFunctions = new();
+            var baseFields = GetFieldInfoEnumerable(type.BaseType);
+            result = result.Concat(baseFields);
         }
 
-        private const BindingFlags fieldAccessModifiers = 
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        return result;
+    }
 
-        private static IEnumerable<FieldInfo> GetFieldInfoEnumerable(Type type)
+    private static FieldInfo TryFindField(IEnumerable<FieldInfo> infos, string fieldName)
+    {
+        string searchFieldName = fieldName.ToUpperInvariant();
+        
+        if (fieldName.StartsWith('_'))
         {
-            IEnumerable<FieldInfo> result =
-            type.GetFields(BindingFlags.Instance
-            | BindingFlags.Public
-            | BindingFlags.NonPublic);
+            searchFieldName = searchFieldName.Substring(1);
+        }
 
-            if (type.BaseType is not null)
+        foreach (var info in infos)
+        {
+            string searchName = info.Name.ToUpperInvariant();
+
+            if (info.Name.StartsWith('_'))
             {
-                var baseFields = GetFieldInfoEnumerable(type.BaseType);
-                result.Concat(baseFields);
+                searchName = searchName.Substring(1);
             }
 
-            return result;
+            if (searchFieldName == searchName)
+            {
+                return info;
+            }
         }
 
-        private static FieldInfo TryFindField(IEnumerable<FieldInfo> infos, string fieldName)
+        return null;
+    }
+
+    private static LambdaExpression CreateMapFunction<Tin>(Tin instance, Type outType)
+    {
+        List<Expression> assignExpression = new();
+
+        var inType = typeof(Tin);
+        NewExpression newExpression = Expression.New(outType);
+
+        var variable = Expression.Variable(outType, "outerVar");
+        var inVariable = Expression.Variable(inType, "innerVar");
+        var assignVarToNew = Expression.Assign(variable, newExpression);
+
+        assignExpression.Add(assignVarToNew);
+        var inInstanceFields = GetFieldInfoEnumerable(inType).ToArray();
+        var outInstanceFileds = GetFieldInfoEnumerable(outType).ToArray();
+
+        foreach (var inField in inInstanceFields)
         {
-            string searchFieldName = fieldName.ToLower();
+            var existingOutInstanceField = TryFindField(outInstanceFileds, inField.Name);
 
-            foreach (var info in infos)
+            if (existingOutInstanceField is not null)
             {
-                string searchName = info.Name.ToLower();
-
-                if (info.Name.StartsWith('_'))
-                {
-                    searchName = info.Name.Substring(1);
-                }
-                if (fieldName.StartsWith('_'))
-                {
-                    searchFieldName = fieldName.Substring(1);
-                }
-
-                if (searchFieldName == searchName)
-                {
-                    return info;
-                }
+                var outInstanceVariable = Expression.Field(variable, existingOutInstanceField);
+                var field = Expression.Field(inVariable, inField.Name);
+                var assign = Expression.Assign(outInstanceVariable, field);
+                assignExpression.Add(assign);
             }
-
-            return null;
         }
 
-        private static LambdaExpression CreateMapFunction<Tin, Tout>()
+        assignExpression.Add(variable);
+        var blockExpression = Expression.Block(new[] { variable }, assignExpression);
+
+        var lambda = Expression.Lambda(blockExpression, inVariable);
+
+        return lambda;
+    }
+
+    public static void Map<Tin, Tout>(Tin inInstance, out Tout outInstance)
+    {
+        var inInstanceType = inInstance.GetType();
+        var outInstanceBaseType = typeof(Tout);
+        var outInstanceType = Resolver.TryResolveType(inInstance);
+
+        if(outInstanceType is null)
         {
-            List<Expression> assignExpression = new();
-            var outType = typeof(Tout);
-            var inType = typeof(Tin);
-            var newExpression = Expression.New(outType);
-            var variable = Expression.Variable(outType, "outerVar");
-            var inVariable = Expression.Variable(inType, "innerVar");
-            var assignVarToNew = Expression.Assign(variable, newExpression);
-
-            assignExpression.Add(assignVarToNew);
-            var inInstanceFields = GetFieldInfoEnumerable(inType);
-            var outInstanceFileds = GetFieldInfoEnumerable(outType);
-
-            foreach (var inField in inInstanceFields)
-            {
-                var existingOutInstanceField = TryFindField(outInstanceFileds, inField.Name);
-
-                if (existingOutInstanceField is not null)
-                {
-                    var outInstanceVariable = Expression.Field(variable, existingOutInstanceField);
-                    var field = Expression.Field(inVariable, inField.Name);
-
-                    var assign = Expression.Assign(outInstanceVariable, field);
-                    assignExpression.Add(assign);
-                }
-            }
-
-            assignExpression.Add(variable);
-            var blockExpression = Expression.Block(new[] { variable }, assignExpression);
-
-            var lambda = Expression.Lambda(blockExpression, inVariable);
-
-            return lambda;
+            outInstance = default;
         }
-
-
-        // todo: finish this
-        public static void Map<Tin, Tout>(Tin inInstance,  out Tout outInstance)
+        else
         {
-            var inInstanceType = typeof(Tin);
-            var outInstanceType = typeof(Tout);
-
-           
-            var mapAttributes = Attribute.GetCustomAttributes(typeof(Tin))
-            .Where(atribute => atribute.GetType() == typeof(MappableAttribute));
-
-            var currentMapAttribute = mapAttributes.FirstOrDefault(attribute => attribute.)
-
-            var typeParamter = mapAttribute.get;
-            var typeParameterValue = (Type)typeParamter.TypedValue.Value;
-            //ArgumentOutOfRangeException.ThrowIfNotEqual<Type>(typeParameterValue, outInstanceType);
-            if(typeParameterValue != outInstanceType)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
-
             var compositeKey = new CompositeTypeKey(inInstanceType, outInstanceType);
 
             Func<Tin, Tout> mapFunc;
@@ -152,11 +152,22 @@ namespace Lab1.Mapper
             }
             else
             {
-                var newMapFunction = CreateMapFunction<Tin, Tout>();
+                var currentMapAttribute = Attribute
+                    .GetCustomAttributes(typeof(Tin))
+                    .Where(attribute => attribute.GetType() == typeof(MappableAttribute))
+                    .Select(attribute => (MappableAttribute)attribute)
+                    .FirstOrDefault(attribute => attribute.ToType == outInstanceBaseType);
+
+                if (currentMapAttribute.ToType != outInstanceBaseType)
+                {
+                    throw new ArgumentOutOfRangeException();
+                }
+
+                var newMapFunction = CreateMapFunction<Tin>(inInstance, outInstanceType);
                 var @delegate = newMapFunction.Compile();
 
                 _mapFunctions.Add(compositeKey, @delegate);
-                mapFunc = (Func<Tin, Tout>)mapFunction;
+                mapFunc = (Func<Tin, Tout>)@delegate;
             }
 
             outInstance = mapFunc(inInstance);

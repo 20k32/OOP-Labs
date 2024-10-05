@@ -5,6 +5,7 @@ using Lab1.GameAccounts;
 using Lab1.Games;
 using Lab1.Games.Logging;
 using Lab1.Mapper;
+using Lab1.Shared;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -106,107 +107,10 @@ internal sealed class Program
 
     private static async Task Main(string[] args)
     {
-        /*var gameAccountDTO = new GameAccountDTO("asdf", 123, "hahaha", Enumerable.Empty<GameHistoryUnit>());
-        gameAccountDTO.GameHistory.AddLast(new GameHistoryUnit("asdf", 34145, "sadfklj", "auisdjfh"));
-        var inType = typeof(GameAccountDTO);
-        var outType = typeof(StandardModeAccount);
-
-
-        var outInstancefileds = outType.GetFields(BindingFlags.Instance 
-            | BindingFlags.Public
-            | BindingFlags.NonPublic)
-            .Concat(outType.BaseType.GetFields(BindingFlags.Instance
-            | BindingFlags.Public
-            | BindingFlags.NonPublic))
-            .ToArray();
-
-        var inInstanceFields = inType.GetFields(BindingFlags.Instance
-            | BindingFlags.Public
-            | BindingFlags.NonPublic)
-            .Concat(inType.BaseType.GetFields(BindingFlags.Instance
-            | BindingFlags.Public
-            | BindingFlags.NonPublic))
-            .ToArray();
-
-        List<Expression> assignExpression= new();
-
-        var newExpression = Expression.New(outType); 
-        var variable = Expression.Variable(outType, "standardModeAccount"); // standardModeAccount
-        var inVariable = Expression.Variable(inType, "gameAccountDto");
-        var assignVarToNew = Expression.Assign(variable, newExpression); // standardModeAccount = new StandardModeAccount()
-
-        assignExpression.Add(assignVarToNew);
-
-        FieldInfo TryFindField(FieldInfo[] infos, string fieldName)
-        {
-            foreach(var info in infos)
-            {
-                string searchName = info.Name.ToLower();
-                string searchFieldName = fieldName.ToLower();
-
-                if (info.Name.StartsWith('_'))
-                {
-                    searchName = info.Name.Substring(1);
-                }
-                if (fieldName.StartsWith('_'))
-                {
-                    searchFieldName = fieldName.Substring(1);
-                }
-
-                if(searchFieldName == searchName)
-                {
-                    return info;
-                }
-            }
-
-            return null;
-        }
-
-
-        foreach (var inField in inInstanceFields)
-        {
-            var existingOutInstanceField = TryFindField(outInstancefileds, inField.Name);
-
-            if (existingOutInstanceField is not null)
-            {
-                var outInstanceVariable = Expression.Field(variable, existingOutInstanceField);
-                var field = Expression.Field(inVariable, inField.Name);
-
-                var assign = Expression.Assign(outInstanceVariable, field);
-                assignExpression.Add(assign);
-            }
-        }
-
-        assignExpression.Add(variable);
-        var blockExpression = Expression.Block(new[] {variable}, assignExpression);
-
-        var lambda = Expression.Lambda(blockExpression, inVariable);
-
-        var func = (Func<GameAccountDTO, StandardModeAccount>)lambda.Compile();
-        Console.WriteLine(func);
-        var entity = func(gameAccountDTO);
-
-        foreach(var item in entity.GetHistory())
-        {
-            Console.WriteLine(item);
-        }*/
-
-        var gameAccountDTO = new GameAccountDTO("asdf", 123, "hahaha", Enumerable.Empty<GameHistoryUnit>());
-        gameAccountDTO.GameHistory.AddLast(new GameHistoryUnit("asdf", 34145, "sadfklj", "auisdjfh"));
-        SimpleMapper.Map(gameAccountDTO, out StandardModeAccount account);
-
-        Console.WriteLine(account);
-        foreach(var item in account.GetHistory())
-        {
-            Console.WriteLine(item);
-        }
-
-        Console.ReadKey();
-
-        //var gameLoadingTask = gameService.LoadDataAsync();
+        var gameLoadingTask = gameService.LoadDataAsync();
         //gameLoadingTask.Start();
 
-        /* bool spin = true;
+         bool spin = true;
 
          while (spin)
          {
@@ -435,11 +339,11 @@ internal sealed class Program
                  case "c" :spin = false; break;
              }
         Console.ReadLine();
-        }*/
+        }
     }
 
-    /*private static async Task OnGameCompletedAsync(Game game)
+    private static async Task OnGameCompletedAsync(Game game)
     {
         await gameService.AddEntityAsync(game);
-    }*/
+    }
 }

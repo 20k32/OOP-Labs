@@ -8,26 +8,26 @@ using System.Security.AccessControl;
 namespace Lab1.Database.DTOs;
 
 [Mappable(typeof(StandardModeAccount))]
-internal struct GameAccountDTO : IMappable<StandardModeAccount>
+internal struct GameAccountDTO
 {
     private string _userName;
-
     public string UserName => _userName;
 
     private int _rating;
-
     public int Rating => _rating;
 
     private string _displayType;
-
     public string AccountType => _displayType;
 
     private LinkedList<GameHistoryUnit> _gameHistory;
-
     public LinkedList<GameHistoryUnit> GameHistory => _gameHistory;
+
+    private uint _gamesCount;
+    public uint GamesCount => _gamesCount;
 
     public GameAccountDTO(string userName, int rating, string accountType, IEnumerable<GameHistoryUnit> history)
     {
+        _gamesCount = 0;
         _userName = userName;
         _rating = rating;
         _gameHistory = new();
@@ -42,25 +42,8 @@ internal struct GameAccountDTO : IMappable<StandardModeAccount>
         }
     }
 
-    public void Map(out StandardModeAccount account)
-    {
-        var enumerableHistory = GameHistory.AsEnumerable();
-
-        if (AccountType == AccountTypes.StandardModeAccount.BaseName)
-        {
-            account = new StandardModeAccount(UserName, enumerableHistory, Rating);
-        }
-        else if (AccountType == AccountTypes.HardModeAccount.BaseName)
-        {
-            account = new HardModeAccount(UserName, enumerableHistory, GameRules.HARD_MODE_ACCOUNT_WIN_STREAK, Rating);
-        }
-        else if (AccountType == AccountTypes.ArcadeModeAccount.BaseName)
-        {
-            account = new ArcadeModeAccount(UserName, enumerableHistory, Rating);
-        }
-
-        else account = null;
-    }
+    public void Map(out StandardModeAccount account) 
+        => SimpleMapper.Map(this, out account);
 
     public void AddGameToHistory(GameHistoryUnit gameHistorUnit)
     {
@@ -80,4 +63,6 @@ internal struct GameAccountDTO : IMappable<StandardModeAccount>
     }
 
     public override int GetHashCode() => UserName.GetHashCode();
+
+    public new Type GetType() => typeof(GameAccountDTO);
 }

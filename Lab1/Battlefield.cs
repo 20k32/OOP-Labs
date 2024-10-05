@@ -25,8 +25,8 @@ internal sealed class Battlefield
         ArgumentNullException.ThrowIfNull(firstPlayer);
         ArgumentNullException.ThrowIfNull(secondPlayer);
 
-        StandardModeAccount current = null;
-        StandardModeAccount opponent = null;
+        StandardModeAccount current;
+        StandardModeAccount opponent;
 
         foreach (var item in Enumerable.Range(0, times))
         {

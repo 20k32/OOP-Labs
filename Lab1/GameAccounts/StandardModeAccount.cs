@@ -1,10 +1,13 @@
 ﻿using Lab1.Database.DTOs;
 using Lab1.Games;
 using Lab1.Games.Logging;
+using Lab1.Mapper;
+using Lab1.Shared;
 
 namespace Lab1.GameAccounts;
 
-internal class StandardModeAccount : IMappable<GameAccountDTO>
+[Mappable(typeof(GameAccountDTO))]
+internal class StandardModeAccount
 {
     protected LinkedList<GameHistoryUnit> _gameHistory;
 
@@ -13,7 +16,7 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
     public string UserName
     {
         get => _userName;
-        set => _userName = value;
+        private set => _userName = value;
     }
 
     private int _rating;
@@ -33,24 +36,19 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
     }
 
     private uint _gamesCount;
-    public uint GamesCount 
-    { 
-        get => _gamesCount; 
-        set => _gamesCount = value; 
-    }
 
     public IEnumerable<GameHistoryUnit> GetHistory() => _gameHistory;
 
-    private StandardModeAccount()
+    protected StandardModeAccount()
     {
-        _displayType = AccountTypes.StandardModeAccount.BaseName;
+        _displayType = Resolver.AccountTypes.StandardModeAccount.BaseName;
     }
 
     public StandardModeAccount(string userName, int rating = 1, uint gamesCount = 0)
     {
         UserName = userName;
         CurrentRating = rating;
-        GamesCount = gamesCount;
+        _gamesCount = gamesCount;
         _gameHistory = new();
     }
 
@@ -58,7 +56,7 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
     {
         UserName = userName;
         CurrentRating = rating;
-        GamesCount = gamesCount;
+        _gamesCount = gamesCount;
         _gameHistory = new();
 
         if (games is not null)
@@ -89,7 +87,7 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
         }
         finally
         {
-            GamesCount++;
+            _gamesCount++;
         }
     }
 
@@ -110,7 +108,7 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
         }
         finally
         {
-            GamesCount++;
+            _gamesCount++;
         }
     }
 
@@ -130,10 +128,8 @@ internal class StandardModeAccount : IMappable<GameAccountDTO>
 
     public override int GetHashCode() => UserName.GetHashCode();
 
-    public void Map(out GameAccountDTO entity)
-    {
-        entity = new(UserName, CurrentRating, DisplayType, _gameHistory);
-    }
+    public void Map(out GameAccountDTO entity) 
+        => SimpleMapper.Map(this, out entity);
 
     protected string _displayType;
     public string DisplayType => _displayType;
