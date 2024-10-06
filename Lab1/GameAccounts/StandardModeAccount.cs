@@ -39,13 +39,20 @@ internal class StandardModeAccount
 
     public IEnumerable<GameHistoryUnit> GetHistory() => _gameHistory;
 
+    private void InitFields()
+    {
+        var unit = Resolver.ResolveAccountType(this);
+        _displayType = unit.BaseName;
+    }
+
     protected StandardModeAccount()
     {
-        _displayType = Resolver.AccountTypes.StandardModeAccount.BaseName;
+        InitFields();
     }
 
     public StandardModeAccount(string userName, int rating = 1, uint gamesCount = 0)
     {
+        InitFields();
         UserName = userName;
         CurrentRating = rating;
         _gamesCount = gamesCount;
@@ -54,6 +61,7 @@ internal class StandardModeAccount
 
     public StandardModeAccount(string userName, IEnumerable<GameHistoryUnit> games, int rating = 1, uint gamesCount = 0)
     {
+        InitFields();
         UserName = userName;
         CurrentRating = rating;
         _gamesCount = gamesCount;

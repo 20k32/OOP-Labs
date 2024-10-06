@@ -27,11 +27,6 @@ internal struct GameDTO
     public GameDTO(string id, int rating, string displayType)
         => (_id, _rating, _displayType) = (id, rating, displayType);
 
-    public GameDTO()
-    {
-        //_id = Nanoid.Generate();
-    }
-
     public void Map(out Game entity) => SimpleMapper.Map(this, out entity);
 
     public override bool Equals([NotNullWhen(true)] object obj)

@@ -158,6 +158,8 @@ internal static class SimpleMapper
                     .Select(attribute => (MappableAttribute)attribute)
                     .FirstOrDefault(attribute => attribute.ToType == outInstanceBaseType);
 
+                ArgumentNullException.ThrowIfNull(currentMapAttribute);
+
                 if (currentMapAttribute.ToType != outInstanceBaseType)
                 {
                     throw new ArgumentOutOfRangeException();

@@ -15,14 +15,6 @@ using System.Xml.Linq;
 
 namespace Lab1;
 
-class Example
-{
-    private readonly int _myReadonlyField = 42;
-
-    public int GetReadonlyFieldValue() => _myReadonlyField;
-}
-
-
 internal sealed class Program
 {
     private static IService<StandardModeAccount> accountService;
@@ -63,9 +55,9 @@ internal sealed class Program
 
         switch(index)
         {
-            case 0: result = new ArcadeModeAccount(userName);break;
-            case 1: result = new HardModeAccount(userName, 5); break;
-            default: result = new(userName); break;
+            case 0: result = new StandardModeAccount(userName);break;
+            case 1: result = new HardModeAccount(userName, GameRules.HARD_MODE_ACCOUNT_WIN_STREAK); break;
+            default: result = new ArcadeModeAccount(userName); break;
         }    
 
         return result;

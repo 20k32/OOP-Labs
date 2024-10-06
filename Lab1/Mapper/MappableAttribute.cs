@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Lab1.Mapper;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
 internal class MappableAttribute : Attribute
 {
     public readonly Type ToType;
