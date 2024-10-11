@@ -29,4 +29,11 @@ internal static class GameFactory
         SetupGame(result);
         return result;
     }
+
+    public static Game CreateFor(Type gameType)
+    {
+        var result = (Game)Activator.CreateInstance(gameType, true);
+        SetupGame(result);
+        return result;
+    }
 }

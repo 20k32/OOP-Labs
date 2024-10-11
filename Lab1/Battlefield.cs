@@ -69,6 +69,54 @@ internal sealed class Battlefield
         }
     }
 
+    public static async Task SimulateSpecificBattleAsync
+        (StandardModeAccount firstPlayer, 
+        StandardModeAccount secondPlayer, 
+        Type gameType, 
+        int times, 
+        Action<Game> callback)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(times, 1);
+        ArgumentNullException.ThrowIfNull(firstPlayer);
+        ArgumentNullException.ThrowIfNull(secondPlayer);
+        ArgumentNullException.ThrowIfNull(gameType);
+
+        StandardModeAccount current;
+        StandardModeAccount opponent;
+
+        foreach (var item in Enumerable.Range(0, times))
+        {
+            var chooseSides = Random.Shared.Next(0, 2);
+
+            if (chooseSides == 0)
+            {
+                opponent = firstPlayer;
+                current = secondPlayer;
+            }
+            else
+            {
+                current = firstPlayer;
+                opponent = secondPlayer;
+            }
+
+            var game = GameFactory.CreateFor(gameType);
+            game.SetPlayers(current, opponent);
+
+            var whoWin = Random.Shared.Next(0, 2);
+
+            if (whoWin == 0)
+            {
+                await game.FirstPlayerWinAsync(accountService);
+            }
+            else
+            {
+                await game.FirstPlayerLooseAsync(accountService);
+            }
+
+            callback(game);
+        }
+    }
+
 
     private static async Task SimulateBattleCoreAsync(List<StandardModeAccount> accounts, int index, int times, Func<Game, Task> callback)
     {
