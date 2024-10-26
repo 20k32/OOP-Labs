@@ -41,9 +41,9 @@ internal abstract class HandlerBase
         string playerName = string.Empty;
         do
         {
-            clearArea();
             write($"\nEnter name for {index} player: ");
             playerName = read();
+            clearArea();
 
         } while (string.IsNullOrWhiteSpace(playerName));
 

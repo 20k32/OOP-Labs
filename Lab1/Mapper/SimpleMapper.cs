@@ -23,7 +23,7 @@ internal static class SimpleMapper
     private readonly struct CompositeTypeKey
     {
         public readonly KeyValuePair<Type, Type> Pair;
-
+        
         public CompositeTypeKey(Type keyA, Type keyB) => Pair = new(keyA, keyB);
 
         public override bool Equals(object obj)
@@ -55,8 +55,8 @@ internal static class SimpleMapper
     {
         IEnumerable<FieldInfo> result =
         type.GetFields(BindingFlags.Instance
-        | BindingFlags.Public
-        | BindingFlags.NonPublic);
+                        | BindingFlags.Public
+                        | BindingFlags.NonPublic);
 
         if (type.BaseType is not null)
         {

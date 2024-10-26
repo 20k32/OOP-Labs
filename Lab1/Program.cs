@@ -1,28 +1,17 @@
-﻿using Lab1.Database;
-using Lab1.Database.DTOs;
+﻿using Lab1.Commands;
+using Lab1.Commands.Core;
 using Lab1.Database.Service;
 using Lab1.GameAccounts;
 using Lab1.Games;
-using Lab1.Games.GameFactory;
-using Lab1.Games.Logging;
-using Lab1.Handlers;
-using Lab1.Mapper;
-using Lab1.Shared;
-using System.Diagnostics;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Threading.Channels;
-using System.Xml.Linq;
 
 namespace Lab1;
 
 internal sealed class Program
 {
-    private static readonly HandlerBase accountCreationHanlder;
-    private static readonly HandlerBase gameHandler;
-    private static readonly HandlerBase accountHandler;
-    private static readonly HandlerBase statsHandler;
+    private static readonly IAsyncCommand addAccountCommand;
+    private static readonly IAsyncCommand playGameCommand;
+    private static readonly IAsyncCommand getAccountsCommand;
+    private static readonly IAsyncCommand getStatsCommand;
 
     private static IService<StandardModeAccount> accountService;
     private static IService<Game> gameService;
@@ -30,29 +19,16 @@ internal sealed class Program
     static Program()
     {
         Database.DIExtensions.ConfigurePersistenceLayer();
-        Handlers.DIExtensions.RegisterHandlers();
+        Handlers.DIExtensions.RegisterHandlers(Console.Write, Console.ReadLine, Console.Clear);
+        Commands.Core.DIExtensions.RegisterCommands();
 
         accountService = IocContainer.GetService<IService<StandardModeAccount>>();
         gameService = IocContainer.GetService<IService<Game>>();
 
-        accountCreationHanlder = IocContainer.GetService<CreationAccountHandler>();
-        gameHandler = IocContainer.GetService<GameHandler>();
-        accountHandler = IocContainer.GetService<AccountHandler>();
-        statsHandler = IocContainer.GetService<StatsHandler>();
-    }
-
-    private static void SubscribeToHandler(HandlerBase handler)
-    {
-        handler.Write += Console.Write;
-        handler.Read += Console.ReadLine;
-        handler.ClearArea += Console.Clear;
-    } 
-
-    private static void UnsubscribeFromHandler(HandlerBase handler)
-    {
-        handler.Write -= Console.Write;
-        handler.Read -= Console.ReadLine;
-        handler.ClearArea -= Console.Clear;
+        addAccountCommand = IocContainer.GetService<AddPlayerCommand>();
+        playGameCommand = IocContainer.GetService<PlayGameCommand>();
+        getAccountsCommand = IocContainer.GetService<GetPlayersCommand>();
+        getStatsCommand = IocContainer.GetService<GetPlayerStatsCommand>();
     }
 
     private static bool TryAddAccount(StandardModeAccount account)
@@ -91,13 +67,7 @@ internal sealed class Program
 
     private static async Task Main(string[] args)
     {
-        SubscribeToHandler(gameHandler);
-        SubscribeToHandler(accountHandler);
-        SubscribeToHandler(accountCreationHanlder);
-        SubscribeToHandler(statsHandler);
-
         var gameLoadingTask = gameService.LoadDataAsync();
-        //gameLoadingTask.Start();
 
         bool spin = true;
 
@@ -105,17 +75,17 @@ internal sealed class Program
         {
             Console.Clear();
             Console.Write("q - Create characters." +
-                "\nw - Get all players." +
+                $"\nw - {getAccountsCommand.GetInfo().CommandName}" +
                 "\ne - Get all games" +
-                "\nr - Search for a player." +
+                $"\nr - {getStatsCommand.GetInfo().CommandName}" +
                 "\nt - Search for a game" +
                 "\na - Update player" +
                 "\ns - Update game" +
                 "\nd - Delete player" +
                 "\nf - Delete game" +
-                "\nz - Add player" +
+                $"\nz - {addAccountCommand.GetInfo().CommandName}" +
                 "\nx - Simulate bloody massacare" +
-                "\nc - Simulate fight" +
+                $"\nc - {playGameCommand.GetInfo().CommandName}" +
                 "\nv - Exit" +
                 "\nAction -> ");
 
@@ -135,7 +105,8 @@ internal sealed class Program
 
                 case "w":
                     {
-                        await accountHandler.HandleAsync();
+                        Console.WriteLine(getAccountsCommand.ToInfoString());
+                        await getAccountsCommand.ExecuteAsync();
                     }; break;
                 case "e":
                     {
@@ -150,7 +121,8 @@ internal sealed class Program
                     }; break;
                 case "r":
                     {
-                        await statsHandler.HandleAsync();
+                        Console.WriteLine(getStatsCommand.ToInfoString());
+                        await getStatsCommand.ExecuteAsync();
                     }; break;
                 case "t":
                     {
@@ -246,7 +218,8 @@ internal sealed class Program
                     }; break;
                 case "z":
                     {
-                        await accountCreationHanlder.HandleAsync();
+                        Console.WriteLine(addAccountCommand.ToInfoString());
+                        await addAccountCommand.ExecuteAsync();
                     }; break;
 
                 case "x":
@@ -299,7 +272,8 @@ internal sealed class Program
 
                 case "c":
                     {
-                        await gameHandler.HandleAsync();
+                        Console.WriteLine(playGameCommand.ToInfoString());
+                        await playGameCommand.ExecuteAsync();
                     }; break;
 
                 case "v": spin = false; break;
@@ -308,10 +282,7 @@ internal sealed class Program
             Console.ReadLine();
         }
 
-        UnsubscribeFromHandler(gameHandler);
-        UnsubscribeFromHandler(accountHandler);
-        UnsubscribeFromHandler(accountCreationHanlder);
-        UnsubscribeFromHandler(statsHandler);
+        Lab1.Handlers.DIExtensions.UnregisterHandlers(Console.Write, Console.ReadLine, Console.Clear);
     }
 
     private static async Task OnGameCompletedAsync(Game game)

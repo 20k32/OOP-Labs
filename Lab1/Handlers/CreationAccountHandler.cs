@@ -19,7 +19,7 @@ namespace Lab1.Handlers
         {
             "1" => new StandardModeAccount(userName),
             "2" => new HardModeAccount(userName, GameRules.HARD_MODE_ACCOUNT_WIN_STREAK),
-            _ => new ArcadeModeAccount(userName)
+             _ => new ArcadeModeAccount(userName)
         };
 
 
